@@ -10,7 +10,6 @@
         - [接口授权](#接口授权)
         - [签名规则](#签名规则)
 - [订单管理](#订单管理)
-    - [统一下单](#统一下单)
     - [统一下单【签名】](#统一下单签名)
 - [异步通知](#异步通知)
 - [更新日志](#更新日志)
@@ -20,60 +19,8 @@
 ## 简介
 ## 通用说明
 ### 接口使用前提
-本平台支持access_token与sign两种模式，请开发之前先获取适合自己团队的请求方式
-### 接口授权
-```
-该授权方式于团队开发者读写团队下的数据。
-```
-#### 第一步： 获取团队授权 access_token
-1. 这里获取的 access_token 与团队资源相关，安全等级非常高，必须只保存在服务器，不允许传给客户端。
-2. 后续通过 access_token 获取团队数据等步骤，也必须从服务器发起。
-3. 建议开发者使用中控服务器统一获取和刷新 access_token，其他业务逻辑服务器所使用的 access_token 均来自于该中控服务器，不应该各自去刷新，否则容易造成冲突，导致 access_token 覆盖而影响业务（多次刷新 access_token ，仅有最新一个有效）。
-4. access_token 有效期为2小时，建议中控服务器不仅需要内部定时主动刷新，还需要提供被动刷新 access_token 的接口，这样便于业务服务器在API调用获知 access_token 已超时的情况下，可以触发 access_token 的刷新流程。
+本平台支持sign模式，请开发之前仔细阅读文档
 
-##### 接口地址
-- 功能: 获取token
-- 请求方式: POST
-- 请求地址: v1/api/pay/accesstoken
-
-```bash
-POST https://open.ktpay.com/v1/api/pay/accesstoken
-```
-```json
-{
-	"mch_id": 10086,
-	"secret": "4ZWQBPN5SFP7MW6EQHXSCGLMAZVJZT4I",
-	"request_id": "@guid()"
-} 
-```
-##### 参数说明
-
-| 参数名 | 类型   | 是否必须 | 描述                 |
-| ------ | ------ | :------: | -------------------- |
-| mch_id | int |    是    | 唯一性商户编号       |
-| secret | string |    是    | 颁发给商户的接口密钥 |
-| request_id| string | 否 | GUID, 可不传, 做幂等或者客户自己回调用 |
-
-
-##### 返回说明
-| 参数名     | 类型   | 描述                                        |
-| ---------- | ------ | ------------------------------------------- |
-| token      | string | 授权码                                      |
-| expires_in | int    | 有效时间，默认为2小时，过期后须重新发起授权 |
-| request_id| string | GUID|
-
-```json
-{
-	"code": 0,
-	"msg": "",
-	"error": "",
-	"data": {
-		"token": "B7C5F08637FB4E8BADDAFF698187AE5B",
-		"expires_in": 43200
-	},
-	"request_id": "db7EeF4C-540f-e5b7-DB06-0cebfE745dA6",
-	"req": null
-}
 ```
 ### 签名规则
 ```
@@ -116,7 +63,7 @@ stringSignTemp=stringA + "&key=api_key" //注：api_key为商户平台设置的�
 
 
 ## 使用规则
-欢迎您使用四方支付（下称 “产品”）。在您正式开通接口服务之前，请您务必审慎阅读、充分理解在使用四方支付接口时应当遵循的规则。您使用蜜蜂支付接口服务即视为您已阅读并同意本规则全部内容的约束。
+欢迎您使用四方支付（下称 “产品”）。在您正式开通接口服务之前，请您务必审慎阅读、充分理解在使用四方支付接口时应当遵循的规则。您使用四方支付接口服务即视为您已阅读并同意本规则全部内容的约束。
 
 1. 四方支付 API 接口服务为商户提供订单 webhook 接口配置等技术服务，具体服务内容请见 接口文档（下称 “服务”）。
 
@@ -130,83 +77,6 @@ stringSignTemp=stringA + "&key=api_key" //注：api_key为商户平台设置的�
 
 
 # 订单管理
-## 统一下单
-### 接口概述
-- 功能: 统一下单
-- 请求方式: POST
-- 请求地址: /v1/api/pay/unifiedorder
-### 请求参数
-| 参数名       | 类型   | 是否必须 | 描述                                                           | 示例值                                  |
-| ------------ | ------ | :------: | -------------------------------------------------------------- | --------------------------------------- |
-| token        | string |    是    | 授权码                                                         | BA1B637A5C8D4B28ACB0889E559C5803        |
-| channel_no   | string|    是     | 不选择渠道时单独传通道编码，选择渠道时，逗号分割                      | 1/ 1,wai1                                |
-| subject      | string |    否    | 标题                                                           | subject                                 |
-| out_order_no | string |    是    | 商户订单号                                                     | 20150320010101001                       |
-| out_username | string |    否    | 商户会员用户名，用于后台展示用                                    | kehu1                               |
-| money        | string |    是    | 金额，单位为元，精确到小数点后两位                               | 1000                                    |
-| client_ip    | string |    是    | 客户IP                                                         | 0.0.0.0                                 |
-| notify_url   | string |    是    | 异步通知地址，支付成功后将支付成功消息以POST请求发送给这个网址 | http://www.demo.com/recieve_notice.html |
-| return_url   | string |    否    | 支付成功后跳转地址                                             | http://www.demo.com/paysucc.html        |
-| param        | string |    否    | 透传参数                                                       | xxxxxxxxxxxxxxxxx                       |
-| payer_name   | string |    否    | 付款人姓名，传入以后，付款人必须匹配                             | 马化腾                                   |
-| timestamp    | int64  |    是    | 发送请求的时间戳,13位带毫秒                                    | 1626863144831                           |
-
-### 响应参数
-| 参数名            | 类型   | 描述               |
-| ----------------- | ------ | ------------------ |
-| mch_id            | int    | 商户编号           |
-| order_no          | string | 平台订单号         |
-| out_order_no      | string | 商户订单号         |
-| money             | string | 订单金额           |
-| real_money        | string | 真实的订单金额     |
-| pay_url           | string | 支付链接           |
-| expired_time      | string | 过期时间           |
-| expired_timestamp | int64  | 过期时间时间戳毫秒 |
-
-### 响应实例
-#### 请求成功
-```json
-{
-    "code":0,
-    "msg":"ok",
-    "data":{
-        "mch_id":"1000123",
-        "order_no":"202204157885214563228",
-        "out_order_no":"20150320010101001",
-        "money":"1000.00",
-        "pay_url":"https://www.demo.com/#/?order_no=202204157885214563228",
-        "expired_time":"2022-07-25 20:41:01",
-        "expired_timestamp":1658752861000
-    },
-    "request_id":"ddec96d2165e4f3e8a642057db116983"
-}
-```
-
-#### 请求失败
-
-```json
-{
-    "code":2,
-    "msg":"InvalidArgument",
-    "data":{},
-    "request_id":"ddec96d2165e4f3e8a642057db116983"
-}
-```
-
-### 错误码
-| 错误代码 | 错误描述                                   |
-| -------- | ------------------------------------------ |
-| 1        | 找不到数据                                 |
-| 2        | token校验不通过                            |
-| 4        | 账号状态异常                               |
-| 9        | 插入数据库失败                             |
-| 10       | 插入数据库失败                             |
-| -1       | money 参数有误                             |
-| -2       | channel_no 参数有误                        |
-| -3       | out_order_no 参数有误                      |
-| -4       | 找不到合适的银行卡，没有配置或者限额已超过 |
-| -5       | 未开通对应通道的频道信息                   |
-
 ## 统一下单【签名】
 ### 接口概述
 - 功能: 统一下单
@@ -289,6 +159,82 @@ channel_no=%d&client_ip=%s&mch_id=%d&money=%s&notify_url=%s&out_order_no=%s&out_
 | -4       | 找不到合适的银行卡，没有配置或者限额已超过 |
 | -5       | 未开通对应通道的频道信息                   |
 
+
+
+## 订单查询【签名】
+### 接口概述
+- 功能: 订单查询
+- 请求方式: POST
+- 请求地址: /v1/api/pay/sign/query
+### 签名字符串
+```
+channel_no=2&mch_id=%d&order_no=%s&timestamp=%d&key=%s
+``` 
+### 请求参数
+| 参数名    | 类型   | 是否必须 | 描述              | 示例值                              |
+| --------- | ------ | :------: | ----------------- |----------------------------------|
+| sign      | string |    是    | 签名              | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+| channel_no | int   |    是    | 通道号            | 2                                |
+| mch_id    | int    |    是    | 商户编号          | 1000010                          |
+| order_no  | string |    是    | 订单号,与out_order_no二选一            | 2015042321001004720              |
+| out_order_no  | string |    是    |商户订单号, 与order_no二选一         | YY2015042321001004720            |
+| timestamp | int    |    是    | 时间戳,13位带毫秒 | 1626863144831                    |
+
+### 响应参数
+| 参数名            | 类型   | 描述                                                           |
+| ----------------- | ------ | -------------------------------------------------------------- |
+| mch_id            | int | 商户号                                                         |
+| order_no          | string | 平台订单号                                                     |
+| out_order_no      | string | 商户订单号                                                     |
+| state             | int    | 状态	0=未出码,1=交易失败,2=待支付,3=交易成功                   |
+| money             | string | 订单金额                                                       |
+| notify_succ       | int    | 1=通知成功，0=通知失败                                         |
+| expired_time      | string | 过期时间                                                       |
+| expired_timestamp | string | 过期时间时间戳毫秒                                             |
+| notify_url        | string | 异步通知地址，支付成功后将支付成功消息以POST请求发送给这个网址 |
+| pay_url           | string | 支付地址                                                       |
+
+### 响应实例
+#### 请求成功
+```json
+{
+    "code":0,
+    "msg":"ok",
+    "data":{
+        "mch_id":"1000122",
+        "order_no":"2015042321001004720",
+        "out_order_no":"20150320010101001",
+        "state":0,
+        "money":"1000.00",
+        "notify_succ":"1",
+        "expired_time":"2022-07-25 20:41:01",
+        "expired_timestamp":"1658752861000",
+        "notify_url":"https://your.domain.com/",
+        "pay_url":"https://www.demo.com/#/?order_no=202204157885214563228",
+    },
+    "request_id":"ddec96d2165e4f3e8a642057db116983"
+}
+```
+
+#### 请求失败
+
+```json
+{
+    "code":1,
+    "msg":"InvalidArgument",
+    "data":{},
+    "request_id":"ddec96d2165e4f3e8a642057db116983"
+}
+```
+
+### 错误码
+| 错误代码 | 错误描述          |
+| -------- | ----------------- |
+| 1        | 找不到数据        |
+| 2        | 参数校验不通过    |
+| -1       | order_no 参数有误 |
+
+
 # 异步通知
 ```
 该链接是通过【统一下单API】中提交的参数notify_url设置，如果链接无法访问，商户将无法接收到通知。
@@ -318,11 +264,4 @@ mch_id=%d&money=%s&notify_time=%s&order_no=%s&out_order_no=%s&param=%s&real_mone
 ```
 
 # 更新日志
-
-
-# 联系我们
-任何建议和问题随时 吐个槽
-
-官方tg: https://t.me/ktpay
-
-官方网站: 
+2023-07-31日创建
