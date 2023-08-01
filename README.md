@@ -162,7 +162,7 @@ channel_no=%d&client_ip=%s&mch_id=%d&money=%s&notify_url=%s&out_order_no=%s&out_
 
 
 
-## 订单查询【签名】
+## 查询订单【签名】
 ### 接口概述
 - 功能: 订单查询
 - 请求方式: POST
